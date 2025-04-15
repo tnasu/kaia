@@ -423,6 +423,7 @@ func (bc *BlockChain) SetCanonicalBlock(blockNum uint64) {
 	}
 	// Make sure the state associated with the block is available
 	head := bc.CurrentBlock()
+	fmt.Println("SetCanonicalBlock:Before:state.New", head.NumberU64())
 	if _, err := state.New(head.Root(), bc.stateCache, bc.snaps, nil); err != nil {
 		// Dangling block without a state associated, init from scratch
 		logger.Warn("Head state missing, repairing chain",
@@ -432,6 +433,7 @@ func (bc *BlockChain) SetCanonicalBlock(blockNum uint64) {
 			return
 		}
 	}
+	fmt.Println("SetCanonicalBlock:After:state.New", bc.CurrentBlock().NumberU64())
 	logger.Info("successfully set the canonical block", "blockNum", blockNum)
 }
 
@@ -563,11 +565,12 @@ func (bc *BlockChain) setHeadBeyondRoot(head uint64, root common.Hash, repair bo
 				for {
 					// If a root threshold was requested but not yet crossed, check
 					if root != (common.Hash{}) && !beyondRoot && newHeadBlock.Root() == root {
+						logger.Error("newHeadBlock.Root() == root")
 						beyondRoot, rootNumber = true, newHeadBlock.NumberU64()
 					}
 					if _, err := state.New(newHeadBlock.Root(), bc.stateCache, bc.snaps, nil); err != nil {
 						// Rewound state missing, rolled back to the parent block, reset to genesis
-						logger.Trace("Block state missing, rewinding further", "number", newHeadBlock.NumberU64(), "hash", newHeadBlock.Hash())
+						logger.Error("Block state missing, rewinding further", "number", newHeadBlock.NumberU64(), "hash", newHeadBlock.Hash())
 						parent := bc.GetBlock(newHeadBlock.ParentHash(), newHeadBlock.NumberU64()-1)
 						if parent != nil {
 							newHeadBlock = parent
@@ -577,15 +580,16 @@ func (bc *BlockChain) setHeadBeyondRoot(head uint64, root common.Hash, repair bo
 						newHeadBlock = bc.genesisBlock
 					}
 					if beyondRoot || newHeadBlock.NumberU64() == 0 {
-						logger.Debug("Rewound to block with state", "number", newHeadBlock.NumberU64(), "hash", newHeadBlock.Hash().String())
+						logger.Error("Rewound to block with state", "number", newHeadBlock.NumberU64(), "hash", newHeadBlock.Hash().String())
 						break
 					}
 					// if newHeadBlock has state, then rewind first
-					logger.Debug("Skipping block with threshold state", "number", newHeadBlock.NumberU64(), "hash", newHeadBlock.Hash().String(), "root", newHeadBlock.Root().String())
+					logger.Error("Skipping block with threshold state", "number", newHeadBlock.NumberU64(), "hash", newHeadBlock.Hash().String(), "root", newHeadBlock.Root().String())
 					newHeadBlock = bc.GetBlock(newHeadBlock.ParentHash(), newHeadBlock.NumberU64()-1) // Keep rewinding
 				}
 			}
 			if newHeadBlock.NumberU64() == 0 {
+				logger.Error("rewound to block number 0, but repair failed")
 				return 0, errors.New("rewound to block number 0, but repair failed")
 			}
 			bc.db.WriteHeadBlockHash(newHeadBlock.Hash())
@@ -600,6 +604,7 @@ func (bc *BlockChain) setHeadBeyondRoot(head uint64, root common.Hash, repair bo
 
 		// Rewind the fast block in a simpleton way to the target head
 		if currentFastBlock := bc.CurrentFastBlock(); currentFastBlock != nil && header.Number.Uint64() < currentFastBlock.NumberU64() {
+			logger.Error("currentFastBlock != nil && header.Number.Uint64() < currentFastBlock.NumberU64()")
 			newHeadFastBlock := bc.GetBlock(header.Hash(), header.Number.Uint64())
 			// If either blocks reached nil, reset to the genesis state
 			if newHeadFastBlock == nil {
@@ -1886,8 +1891,10 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 		results <-chan error
 	)
 	if bc.engine.CanVerifyHeadersConcurrently() {
+		fmt.Println("####:insertChain:VerifyHeaders", bc.CurrentBlock().NumberU64())
 		abort, results = bc.engine.VerifyHeaders(bc, headers, seals)
 	} else {
+		fmt.Println("####:insertChain:PreprocessHeaderVerification", bc.CurrentBlock().NumberU64())
 		abort, results = bc.engine.PreprocessHeaderVerification(headers)
 	}
 	defer close(abort)
@@ -1897,6 +1904,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 
 	// Iterate over the blocks and insert when the verifier permits
 	for i, block := range chain {
+		fmt.Println("####:insertChain:ProcessingBlock", block.NumberU64())
 		// If the chain is terminating, stop processing blocks
 		if atomic.LoadInt32(&bc.procInterrupt) == 1 {
 			logger.Debug("Premature abort during blocks processing")
@@ -1910,6 +1918,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 		} else {
 			parent = chain[i-1]
 		}
+		fmt.Println("####:insertChain:parent", parent.NumberU64())
 
 		// If we have a followup block, run that against the current state to pre-cache
 		// transactions and probabilistically some of the account/storage trie nodes.
@@ -1959,6 +1968,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 		}
 		// If the header is a banned one, straight out abort
 		if BadHashes[block.Hash()] {
+			fmt.Println("####:insertChain:reportBlock", block.NumberU64(), ErrBlacklistedHash)
 			bc.reportBlock(block, nil, ErrBlacklistedHash)
 			return i, events, coalescedLogs, ErrBlacklistedHash
 		}
@@ -1967,13 +1977,16 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 
 		err := <-results
 		if !bc.engine.CanVerifyHeadersConcurrently() && err == nil {
+			fmt.Println("####:insertChain:VerifyHeader", block.NumberU64())
 			err = bc.engine.VerifyHeader(bc, block.Header(), true)
 		}
 
 		if err == nil {
+			fmt.Println("####:insertChain:ValidateBody", block.NumberU64())
 			err = bc.validator.ValidateBody(block)
 		}
 
+		fmt.Println("####:insertChain:switch", block.NumberU64(), err)
 		switch {
 		case err == ErrKnownBlock:
 			// Block and state both already known. However if the current block is below
@@ -2032,6 +2045,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 
 		case err != nil:
 			bc.futureBlocks.Remove(block.Hash())
+			fmt.Println("####:insertChain:reportBlockByErr", block.NumberU64(), err)
 			bc.reportBlock(block, nil, err)
 			return i, events, coalescedLogs, err
 		}
@@ -2044,6 +2058,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 		// Process block using the parent state as reference point.
 		receipts, logs, usedGas, internalTxTraces, procStats, err := bc.processor.Process(block, stateDB, bc.vmConfig)
 		if err != nil {
+			fmt.Println("####:insertChain:reportBlockByProcessErr", block.NumberU64(), err)
 			bc.reportBlock(block, receipts, err)
 			atomic.StoreUint32(&followupInterrupt, 1)
 			return i, events, coalescedLogs, err
@@ -2052,6 +2067,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 		// Validate the state using the default validator
 		err = bc.validator.ValidateState(block, parent, stateDB, receipts, usedGas)
 		if err != nil {
+			fmt.Println("####:insertChain:reportBlockByValidateStateErr", block.NumberU64(), err)
 			bc.reportBlock(block, receipts, err)
 			atomic.StoreUint32(&followupInterrupt, 1)
 			return i, events, coalescedLogs, err

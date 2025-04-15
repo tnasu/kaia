@@ -272,7 +272,9 @@ func New(ctx *node.ServiceContext, config *Config) (*CN, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("NewBlockChain:Before:SetCanonicalBlock", bc.CurrentBlock().NumberU64())
 	bc.SetCanonicalBlock(config.StartBlockNumber)
+	fmt.Println("NewBlockChain:After:SetCanonicalBlock", bc.CurrentBlock().NumberU64())
 
 	// Write the live pruning flag to database if the node is started for the first time
 	if config.LivePruning && !chainDB.ReadPruningEnabled() {

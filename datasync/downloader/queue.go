@@ -425,8 +425,10 @@ func (q *queue) Results(block bool) []*fetchResult {
 	}
 	// Regardless if closed or not, we can still deliver whatever we have
 	results := q.resultCache.GetCompleted(maxResultsProcess)
+	fmt.Println("####:Results:", len(results))
 	for _, result := range results {
 		// Recalculate the result item weights to prevent memory exhaustion
+		fmt.Println("####:result:", result.Header.Number.Uint64())
 		size := result.Header.Size()
 		for _, receipt := range result.Receipts {
 			size += receipt.Size()
@@ -515,6 +517,7 @@ func (q *queue) ReserveBodies(p *peerConnection, count int) (*fetchRequest, bool
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
+	fmt.Println("####:ReserveBodies:", count, q.blockTaskQueue.Size())
 	return q.reserveHeaders(p, count, q.blockTaskPool, q.blockTaskQueue, q.blockPendPool, bodyType)
 }
 
@@ -525,6 +528,7 @@ func (q *queue) ReserveReceipts(p *peerConnection, count int) (*fetchRequest, bo
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
+	fmt.Println("####:ReserveReceipts:", count, q.receiptTaskQueue.Size())
 	return q.reserveHeaders(p, count, q.receiptTaskPool, q.receiptTaskQueue, q.receiptPendPool, receiptType)
 }
 
@@ -535,6 +539,7 @@ func (q *queue) ReserveStakingInfos(p *peerConnection, count int) (*fetchRequest
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
+	fmt.Println("####:ReserveStakingInfos:", count, q.stakingInfoTaskQueue.Size())
 	return q.reserveHeaders(p, count, q.stakingInfoTaskPool, q.stakingInfoTaskQueue, q.stakingInfoPendPool, stakingInfoType)
 }
 
