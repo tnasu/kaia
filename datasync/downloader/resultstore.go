@@ -87,11 +87,14 @@ func (r *resultStore) AddFetch(header *types.Header, mode SyncMode, proposerPoli
 	defer r.lock.Unlock()
 
 	var index int
+	fmt.Println("####:AddFetch:", header.Number.Uint64())
 	item, index, stale, throttled, err = r.getFetchResult(header.Number.Uint64())
 	if err != nil || stale || throttled {
+		fmt.Println("####:AddFetch:err:", header.Number.Uint64(), err)
 		return stale, throttled, item, err
 	}
 	if item == nil {
+		fmt.Println("####:AddFetch:newFetchResult", header.Number.Uint64())
 		item = newFetchResult(header, mode, proposerPolicy, isKaiaFork)
 		r.items[index] = item
 	}

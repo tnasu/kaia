@@ -17,6 +17,8 @@
 package impl
 
 import (
+	"fmt"
+
 	"github.com/kaiachain/kaia/common"
 	"github.com/kaiachain/kaia/kaiax/valset"
 )
@@ -35,10 +37,12 @@ func (v *ValsetModule) GetCouncil(num uint64) ([]common.Address, error) {
 func (v *ValsetModule) GetDemotedValidators(num uint64) ([]common.Address, error) {
 	council, err := v.getCouncil(num)
 	if err != nil {
+		fmt.Println("####:GetDemotedValidators:GetCouncil", num, err)
 		return nil, err
 	}
 	demoted, err := v.getDemotedValidators(council, num)
 	if err != nil {
+		fmt.Println("####:GetDemotedValidators:getDemotedValidators", num, err)
 		return nil, err
 	}
 	return demoted.List(), nil

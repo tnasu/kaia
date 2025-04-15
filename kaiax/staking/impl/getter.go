@@ -63,6 +63,7 @@ func (s *StakingModule) GetStakingInfo(num uint64) (*staking.StakingInfo, error)
 	// Read from the state
 	si, err := s.getFromStateByNumber(sourceNum)
 	if err != nil {
+		fmt.Println("####:GetStakingInfo:getFromStateByNumber", sourceNum, err)
 		return nil, err
 	}
 

@@ -17,6 +17,7 @@
 package impl
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/kaiachain/kaia/common"
@@ -47,6 +48,7 @@ func (v *ValsetModule) getDemotedValidators(council *valset.AddressSet, num uint
 		// Otherwise, filter out based on staking amounts.
 		si, err := v.StakingModule.GetStakingInfo(num)
 		if err != nil {
+			fmt.Println("####:getDemotedValidators:GetStakingInfo", num, err)
 			return nil, err
 		}
 		return getDemotedValidatorsIstanbul(council, si, pset), nil

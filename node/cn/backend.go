@@ -290,7 +290,9 @@ func New(ctx *node.ServiceContext, config *Config) (*CN, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("NewBlockChain:Before:SetCanonicalBlock", bc.CurrentBlock().NumberU64())
 	bc.SetCanonicalBlock(config.StartBlockNumber)
+	fmt.Println("NewBlockChain:After:SetCanonicalBlock", bc.CurrentBlock().NumberU64())
 
 	// Write the live pruning flag to database if the node is started for the first time
 	if config.LivePruning && !chainDB.ReadPruningEnabled() {
@@ -408,6 +410,7 @@ func New(ctx *node.ServiceContext, config *Config) (*CN, error) {
 	}
 
 	// Fill the staking info cache for the recent blocks.
+	fmt.Println("SetupKaiaxModules:Before:PreloadStakingInfo", cn.blockchain.CurrentBlock().NumberU64())
 	if currBlock := cn.blockchain.CurrentBlock(); currBlock.NumberU64() > 0 {
 		logger.Info("Preloading staking info for the recent blocks", "blockNumber", currBlock.NumberU64())
 		if parentBlock := cn.blockchain.GetBlockByNumber(currBlock.NumberU64() - 1); parentBlock != nil {
@@ -418,7 +421,7 @@ func New(ctx *node.ServiceContext, config *Config) (*CN, error) {
 			}
 		}
 	}
-
+	fmt.Println("SetupKaiaxModules:After:PreloadStakingInfo", cn.blockchain.CurrentBlock().NumberU64())
 	if config.AutoRestartFlag {
 		daemonPath := config.DaemonPathFlag
 		restartInterval := config.RestartTimeOutFlag

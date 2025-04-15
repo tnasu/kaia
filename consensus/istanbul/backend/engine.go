@@ -26,6 +26,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -111,6 +112,7 @@ func cacheSignatureAddresses(data []byte, sig []byte) (common.Address, error) {
 	}
 	addr, err := istanbul.GetSignatureAddress(data, sig)
 	if err != nil {
+		fmt.Println("####:cacheSignatureAddresses:err", err)
 		return common.Address{}, err
 	}
 	signatureAddresses.Add(sigStr, addr)
@@ -136,12 +138,15 @@ func (sb *backend) PreprocessHeaderVerification(headers []*types.Header) (chan<-
 		for _, header := range headers {
 			var err error
 			if errored { // If errored once in the batch, skip the rest
+				fmt.Println("####:PreprocessHeaderVerification:errored:", header.Number.Uint64())
 				err = consensus.ErrUnknownAncestor
 			} else {
+				fmt.Println("####:PreprocessHeaderVerification:computeSignatureAddrs:", header.Number.Uint64())
 				err = sb.computeSignatureAddrs(header)
 			}
 
 			if err != nil {
+				fmt.Println("####:PreprocessHeaderVerification:", header.Number.Uint64(), "err:", err)
 				errored = true
 			}
 
@@ -159,12 +164,14 @@ func (sb *backend) PreprocessHeaderVerification(headers []*types.Header) (chan<-
 func (sb *backend) computeSignatureAddrs(header *types.Header) error {
 	_, err := ecrecover(header)
 	if err != nil {
+		fmt.Println("####:computeSignatureAddrs:ecrecover", header.Number.Uint64(), err)
 		return err
 	}
 
 	// Retrieve the signature from the header extra-data
 	istanbulExtra, err := types.ExtractIstanbulExtra(header)
 	if err != nil {
+		fmt.Println("####:computeSignatureAddrs:ExtractIstanbulExtra", header.Number.Uint64(), err)
 		return err
 	}
 
@@ -172,6 +179,7 @@ func (sb *backend) computeSignatureAddrs(header *types.Header) error {
 	for _, seal := range istanbulExtra.CommittedSeal {
 		_, err := cacheSignatureAddresses(proposalSeal, seal)
 		if err != nil {
+			fmt.Println("####:computeSignatureAddrs:cacheSignatureAddresses", header.Number.Uint64(), err)
 			return errInvalidSignature
 		}
 	}
@@ -187,6 +195,7 @@ func (sb *backend) VerifyHeader(chain consensus.ChainReader, header *types.Heade
 		// If current block is genesis, the parent is also genesis
 		parent = append(parent, chain.GetHeaderByNumber(0))
 	} else {
+		fmt.Println("####:VerifyHeader:parent:", header.Number.Uint64())
 		parent = append(parent, chain.GetHeader(header.ParentHash, header.Number.Uint64()-1))
 	}
 	return sb.verifyHeader(chain, header, parent)
@@ -208,6 +217,7 @@ func (sb *backend) verifyHeader(chain consensus.ChainReader, header *types.Heade
 		pset := sb.govModule.GetParamSet(blockNum)
 		kip71 := pset.ToKip71Config()
 		if err := misc.VerifyMagmaHeader(parents[len(parents)-1], header, kip71); err != nil {
+			fmt.Println("####:verifyHeader:VerifyMagmaHeader", header.Number.Uint64(), err)
 			return err
 		}
 	} else if header.BaseFee != nil {
@@ -230,11 +240,13 @@ func (sb *backend) verifyHeader(chain consensus.ChainReader, header *types.Heade
 
 	// TODO-kaiax: further flatten the code inside; especially after most of the checks are moved to consensus modules
 	if err := sb.verifyCascadingFields(chain, header, parents); err != nil {
+		fmt.Println("####:verifyHeader:verifyCascadingFields", header.Number.Uint64(), err)
 		return err
 	}
 
 	for _, module := range sb.consensusModules {
 		if err := module.VerifyHeader(header); err != nil {
+			fmt.Println("####:verifyHeader:module.VerifyHeader", header.Number.Uint64(), err)
 			return err
 		}
 	}
@@ -266,6 +278,7 @@ func (sb *backend) verifyCascadingFields(chain consensus.ChainReader, header *ty
 		return errInvalidTimestamp
 	}
 	if err := sb.verifySigner(chain, header, parents); err != nil {
+		fmt.Println("####:verifyCascadingFields:verifySigner", header.Number.Uint64(), err)
 		return err
 	}
 
@@ -273,9 +286,11 @@ func (sb *backend) verifyCascadingFields(chain consensus.ChainReader, header *ty
 	if chain.Config().IsRandaoForkEnabled(header.Number) {
 		prevMixHash := headerMixHash(chain, parent)
 		if err := sb.VerifyRandao(chain, header, prevMixHash); err != nil {
+			fmt.Println("####:verifyCascadingFields:VerifyRandao", header.Number.Uint64(), err)
 			return err
 		}
 	} else if header.RandomReveal != nil || header.MixHash != nil {
+		fmt.Println("####:verifyCascadingFields:errUnexpectedRandao", header.Number.Uint64(), errUnexpectedRandao)
 		return errUnexpectedRandao
 	}
 
@@ -324,12 +339,14 @@ func (sb *backend) verifySigner(chain consensus.ChainReader, header *types.Heade
 	// Retrieve the snapshot needed to verify this header and cache it
 	valSet, err := sb.GetValidatorSet(number)
 	if err != nil {
+		fmt.Println("####:verifySigner:GetValidatorSet", header.Number.Uint64(), err)
 		return err
 	}
 
 	// resolve the authorization key and check against signers
 	signer, err := ecrecover(header)
 	if err != nil {
+		fmt.Println("####:verifySigner:ecrecover", header.Number.Uint64(), err)
 		return err
 	}
 
@@ -351,11 +368,13 @@ func (sb *backend) verifyCommittedSeals(chain consensus.ChainReader, header *typ
 	// Retrieve the snapshot needed to verify this header and cache it
 	valSet, err := sb.GetCommitteeStateByRound(number, uint64(header.Round()))
 	if err != nil {
+		fmt.Println("####:verifyCommittedSeals:GetCommitteeStateByRound", header.Number.Uint64(), err)
 		return err
 	}
 
 	extra, err := types.ExtractIstanbulExtra(header)
 	if err != nil {
+		fmt.Println("####:verifyCommittedSeals:ExtractIstanbulExtra", header.Number.Uint64(), err)
 		return err
 	}
 	// The length of Committed seals should be larger than 0
@@ -827,10 +846,12 @@ func ecrecover(header *types.Header) (common.Address, error) {
 	// Retrieve the signature from the header extra-data
 	istanbulExtra, err := types.ExtractIstanbulExtra(header)
 	if err != nil {
+		fmt.Println("####:ecrecover:ExtractIstanbulExtra", header.Number.Uint64(), err)
 		return common.Address{}, err
 	}
 	addr, err := cacheSignatureAddresses(sigHash(header).Bytes(), istanbulExtra.Seal)
 	if err != nil {
+		fmt.Println("####:ecrecover:cacheSignatureAddresses", header.Number.Uint64(), err)
 		return addr, err
 	}
 

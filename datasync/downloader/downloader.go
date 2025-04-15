@@ -488,9 +488,9 @@ func (d *Downloader) syncWithPeer(p *peerConnection, hash common.Hash, td *big.I
 	}
 	mode := d.getMode()
 
-	logger.Debug("Synchronising with the network", "peer", p.id, "kaia", p.version, "head", hash, "td", td, "mode", mode)
+	logger.Info("Synchronising with the network", "peer", p.id, "kaia", p.version, "head", hash, "td", td, "mode", mode)
 	defer func(start time.Time) {
-		logger.Debug("Synchronisation terminated", "elapsed", time.Since(start))
+		logger.Info("Synchronisation terminated", "elapsed", time.Since(start))
 	}(time.Now())
 
 	// Look up the sync boundaries: the common ancestor and the target block
@@ -822,7 +822,7 @@ func (d *Downloader) findAncestor(p *peerConnection, height uint64) (uint64, err
 	if ceil >= MaxForkAncestry {
 		floor = int64(ceil - MaxForkAncestry)
 	}
-	p.logger.Debug("Looking for common ancestor", "local", ceil, "remote", height)
+	p.logger.Info("Looking for common ancestor", "local", ceil, "remote", height)
 
 	// Request the topmost blocks to short circuit binary ancestor lookup
 	head := ceil
@@ -1208,7 +1208,7 @@ func (d *Downloader) fillHeaderSkeleton(from uint64, skeleton []*types.Header) (
 // available peers, reserving a chunk of blocks for each, waiting for delivery
 // and also periodically checking for timeouts.
 func (d *Downloader) fetchBodies(from uint64) error {
-	logger.Debug("Downloading block bodies", "origin", from)
+	logger.Info("Downloading block bodies", "origin", from)
 
 	start := time.Now()
 	var (
@@ -1673,9 +1673,9 @@ func (d *Downloader) processHeaders(origin uint64, td *big.Int) error {
 
 // processFullSyncContent takes fetch results from the queue and imports them into the chain.
 func (d *Downloader) processFullSyncContent() error {
-	logger.Debug("Processing full sync content")
+	logger.Info("Processing full sync content")
 	defer func(start time.Time) {
-		logger.Debug("Processing full sync content terminated", "elapsed", time.Since(start))
+		logger.Info("Processing full sync content terminated", "elapsed", time.Since(start))
 	}(time.Now())
 	for {
 		results := d.queue.Results(true)
@@ -1703,7 +1703,7 @@ func (d *Downloader) importBlockResults(results []*fetchResult) error {
 	}
 	// Retrieve the a batch of results to import
 	first, last := results[0].Header, results[len(results)-1].Header
-	logger.Debug("Inserting downloaded chain", "items", len(results),
+	logger.Info("Inserting downloaded chain", "items", len(results),
 		"firstnum", first.Number, "firsthash", first.Hash(),
 		"lastnum", last.Number, "lasthash", last.Hash(),
 	)
@@ -1718,7 +1718,7 @@ func (d *Downloader) importBlockResults(results []*fetchResult) error {
 			return errCanceled
 		default:
 			if _, err := d.blockchain.InsertChain(types.Blocks{block}); err != nil {
-				logger.Debug("Downloaded item processing failed", "number", block.Number(), "hash", block.Hash(), "err", err)
+				logger.Info("Downloaded item processing failed", "number", block.Number(), "hash", block.Hash(), "err", err)
 				return fmt.Errorf("%w: %v", errInvalidChain, err)
 			}
 		}
@@ -1729,9 +1729,9 @@ func (d *Downloader) importBlockResults(results []*fetchResult) error {
 // processFastSyncContent takes fetch results from the queue and writes them to the
 // database. It also controls the synchronisation of state nodes of the pivot block.
 func (d *Downloader) processFastSyncContent() error {
-	logger.Debug("Processing fast sync content")
+	logger.Info("Processing fast sync content")
 	defer func(start time.Time) {
-		logger.Debug("Processing fast sync content terminated", "elapsed", time.Since(start))
+		logger.Info("Processing fast sync content terminated", "elapsed", time.Since(start))
 	}(time.Now())
 	// Start syncing state of the reported head block. This should get us most of
 	// the state of the pivot block.

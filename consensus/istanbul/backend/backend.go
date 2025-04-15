@@ -24,6 +24,7 @@ package backend
 
 import (
 	"crypto/ecdsa"
+	"fmt"
 	"math/big"
 	"sync"
 	"sync/atomic"
@@ -400,11 +401,13 @@ func (sb *backend) HasBadProposal(hash common.Hash) bool {
 func (sb *backend) GetValidatorSet(num uint64) (*istanbul.BlockValSet, error) {
 	council, err := sb.valsetModule.GetCouncil(num)
 	if err != nil {
+		fmt.Println("####:GetValidatorSet:GetCouncil", num, err)
 		return nil, err
 	}
 
 	demoted, err := sb.valsetModule.GetDemotedValidators(num)
 	if err != nil {
+		fmt.Println("####:GetValidatorSet:GetDemotedValidators", num, err)
 		return nil, err
 	}
 
