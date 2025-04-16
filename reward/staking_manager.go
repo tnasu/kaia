@@ -156,13 +156,15 @@ func GetStakingInfo(blockNum uint64) *StakingInfo {
 		if blockNum > 0 {
 			stakingBlockNumber--
 		}
+		fmt.Println("####:GetStakingInfo:GetStakingInfoForKaiaBlock", stakingBlockNumber)
 		stakingInfo = GetStakingInfoForKaiaBlock(stakingBlockNumber)
 	} else {
 		stakingBlockNumber = params.CalcStakingBlockNumber(blockNum)
+		fmt.Println("####:GetStakingInfo:GetStakingInfoOnStakingBlock", stakingBlockNumber)
 		stakingInfo = GetStakingInfoOnStakingBlock(stakingBlockNumber)
 	}
 
-	logger.Debug("Staking information is requested", "blockNum", blockNum, "staking block number", stakingBlockNumber)
+	logger.Error("Staking information is requested", "blockNum", blockNum, "staking block number", stakingBlockNumber)
 	return stakingInfo
 }
 

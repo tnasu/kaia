@@ -209,7 +209,7 @@ func (s *Snapshot) apply(headers []*types.Header, gov governance.Engine, addr co
 			minStaking := pset.MinimumStakeBig().Uint64()
 
 			if err := snap.ValSet.RefreshValSet(number+1, chain.Config(), isSingle, govNode, minStaking); err != nil {
-				logger.Trace("Skip refreshing validators while creating snapshot", "snap.Number", snap.Number, "err", err)
+				logger.Error("Skip refreshing validators while creating snapshot", "snap.Number", snap.Number, "err", err)
 			}
 
 			// Do not refresh proposers from the kaia fork block.

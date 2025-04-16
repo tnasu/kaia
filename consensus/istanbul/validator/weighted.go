@@ -670,6 +670,7 @@ func (valSet *weightedCouncil) RefreshValSet(blockNum uint64, config *params.Cha
 	newStakingInfo := reward.GetStakingInfo(stakingBlockNum)
 
 	if newStakingInfo == nil {
+		fmt.Println("####:RefreshValSet:newStakingInfo==nil", stakingBlockNum)
 		// Just return without refreshing validators
 		return errors.New("skip refreshing validators due to no staking info")
 	}
