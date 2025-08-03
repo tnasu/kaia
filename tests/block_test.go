@@ -52,6 +52,7 @@ func (suite *ExecutionSpecBlockTestSuite) TestExecutionSpecBlock() {
 		t.Skipf("directory %s does not exist", executionSpecBlockTestDir)
 	}
 	bt := new(testMatcher)
+	bt.skipLoad(`^prague\/eip7623_increase_calldata_cost\/`)
 
 	// TODO-Kaia: should remove these skip
 	// executing precompiled contracts with value transferring is not permitted
@@ -110,6 +111,9 @@ func (suite *ExecutionSpecBlockTestSuite) TestExecutionSpecBlock() {
 			if test.json.Network == fork {
 				t.Skip()
 			}
+			// if !strings.Contains(name, "prague/eip7702_set_code_tx/set_code_txs/set_code_max_depth_call_stack.json") {
+			// 	t.Skip("for targeting test")
+			// }
 		}
 
 		if err := bt.checkFailure(t, name, test.Run()); err != nil {

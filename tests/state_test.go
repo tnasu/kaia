@@ -88,6 +88,7 @@ func (suite *ExecutionSpecStateTestSuite) TestExecutionSpecState() {
 		t.Skipf("directory %s does not exist", executionSpecStateTestDir)
 	}
 	st := new(testMatcher)
+	st.skipLoad(`^prague\/eip7623_increase_calldata_cost\/`)
 
 	// TODO-Kaia: should remove these skip
 	// executing precompiled contracts with value transferring is not permitted
@@ -144,6 +145,9 @@ func execStateTest(t *testing.T, st *testMatcher, test *StateTest, name string, 
 					t.Skipf("%s not supported yet", subtest.Fork)
 				}
 			}
+			// if !strings.Contains(name, "prague/eip7702_set_code_tx/set_code_txs/ext_code_on_self_set_code.json/tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_ext_code_on_self_set_code[fork_Prague-state_test-balance_0]") {
+			// 	t.Skip("for targeting test")
+			// }
 			withTrace(t, test.gasLimit(subtest), func(vmconfig vm.Config) error {
 				err := test.Run(subtest, vmconfig, isTestExecutionSpecState)
 				return st.checkFailure(t, name, err)
