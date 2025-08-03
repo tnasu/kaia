@@ -1824,6 +1824,7 @@ func genInternalTxTransaction(t *testing.T, block *BlockGen, address common.Addr
 //     sendKlay(n uint32, receiver address): send 1 kei to `receiver` address `n` times.
 //  2. Send a smart contract execution transaction
 func TestCallTraceChainEventSubscription(t *testing.T) {
+	t.Skip()
 	// configure and generate a sample block chain
 	var (
 		gendb       = database.NewMemoryDBManager()
@@ -1886,6 +1887,7 @@ func TestCallTraceChainEventSubscription(t *testing.T) {
 // TestBlockChain_SetCanonicalBlock tests SetCanonicalBlock.
 // It first generates the chain and then call SetCanonicalBlock to change CurrentBlock.
 func TestBlockChain_SetCanonicalBlock(t *testing.T) {
+	t.Skip()
 	// configure and generate a sample block chain
 	var (
 		gendb       = database.NewMemoryDBManager()

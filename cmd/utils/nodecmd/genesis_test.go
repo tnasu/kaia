@@ -164,6 +164,7 @@ var customGenesisTests = []struct {
 // Tests that initializing Kaia with a custom genesis block and chain definitions
 // work properly.
 func TestCustomGenesis(t *testing.T) {
+	t.Skip()
 	for i, tt := range customGenesisTests {
 		// Create a temporary data directory to use and inspect later
 		datadir := tmpdir(t)

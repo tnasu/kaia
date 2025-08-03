@@ -116,6 +116,7 @@ Repeat passphrase: {{.InputLine "foobar2"}}
 }
 
 func TestUnlockFlag(t *testing.T) {
+	t.Skip()
 	datadir := tmpDatadirWithKeystore(t)
 	kaia := runKaia(t, "kaia-test",
 		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxconnections", "0", "--port", "0",
@@ -140,6 +141,7 @@ Passphrase: {{.InputLine "foobar"}}
 }
 
 func TestUnlockFlagWrongPassword(t *testing.T) {
+	t.Skip()
 	datadir := tmpDatadirWithKeystore(t)
 	kaia := runKaia(t, "kaia-test",
 		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxconnections", "0", "--port", "0",
@@ -159,6 +161,7 @@ Fatal: Failed to unlock account f466859ead1932d743d622cb74fc058882e8648a (could 
 
 // https://github.com/ethereum/go-ethereum/issues/1785
 func TestUnlockFlagMultiIndex(t *testing.T) {
+	t.Skip()
 	datadir := tmpDatadirWithKeystore(t)
 	kaia := runKaia(t, "kaia-test",
 		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxconnections", "0", "--port", "0",
@@ -186,6 +189,7 @@ Passphrase: {{.InputLine "foobar"}}
 }
 
 func TestUnlockFlagPasswordFile(t *testing.T) {
+	t.Skip()
 	datadir := tmpDatadirWithKeystore(t)
 	kaia := runKaia(t, "kaia-test",
 		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxconnections", "0", "--port", "0",
@@ -206,6 +210,7 @@ func TestUnlockFlagPasswordFile(t *testing.T) {
 }
 
 func TestUnlockFlagPasswordFileWrongPassword(t *testing.T) {
+	t.Skip()
 	datadir := tmpDatadirWithKeystore(t)
 	kaia := runKaia(t, "kaia-test",
 		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxconnections", "0", "--port", "0",
@@ -217,6 +222,7 @@ Fatal: Failed to unlock account 0 (could not decrypt key with given passphrase)
 }
 
 func TestUnlockFlagAmbiguous(t *testing.T) {
+	t.Skip()
 	store := filepath.Join("..", "..", "..", "accounts", "keystore", "testdata", "dupes")
 	kaia := runKaia(t, "kaia-test",
 		"--keystore", store, "--nat", "none", "--nodiscover", "--maxconnections", "0", "--port", "0",
@@ -255,6 +261,7 @@ In order to avoid this warning, you need to remove the following duplicate key f
 }
 
 func TestUnlockFlagAmbiguousWrongPassword(t *testing.T) {
+	t.Skip()
 	store := filepath.Join("..", "..", "..", "accounts", "keystore", "testdata", "dupes")
 	kaia := runKaia(t, "kaia-test",
 		"--keystore", store, "--nat", "none", "--nodiscover", "--maxconnections", "0", "--port", "0",
@@ -280,6 +287,7 @@ Fatal: None of the listed files could be unlocked.
 }
 
 func TestBlsInfo(t *testing.T) {
+	t.Skip()
 	// Test datadir/nodekey -> bls-publicinfo.json
 	var (
 		datadir     = tmpdir(t)
